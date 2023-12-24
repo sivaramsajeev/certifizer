@@ -1,45 +1,47 @@
 package main
 
 import (
-	"os"
-	"os/exec"
-	"path/filepath"
+	"io/ioutil"
+	"regexp"
+
+	"gopkg.in/yaml.v2"
 )
 
-type ConfigChecker struct {
-	isFresh          bool
-	isUpdateRequired bool
+type Config struct {
+	Domain string `yaml:"domain"`
+	Email  string `yaml:"email"`
+	Ports  []int  `yaml:"ports"`
+	Offset int    `yaml:"offset,omitempty"`
 }
 
-func (c *ConfigChecker) check() {
-	checkConfigFile()
-	c.isFresh = isFreshInstallation()
-
-	logger.Println("✅ Config checks are done")
-}
-
-func (c *ConfigChecker) displayPortMappingInfo() {
-	logger.Println("✅ The port mappings")
-}
-
-func checkConfigFile() {
-	configFilePath := os.Getenv("CERTIFIZER_CONFIG_PATH")
-	if configFilePath == "" {
-		homePath, err := os.UserHomeDir()
-		if err != nil {
-			logger.Fatal("🔥 Error reading home path")
-		}
-		configFilePath = filepath.Join(homePath, "certifize.yml")
-		logger.Println("✅ Home path: ", configFilePath)
+func (config *Config) validate() {
+	if config.Domain == "" {
+		logger.Panic("❌ Domain is empty in the configuration.")
 	}
 
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		printConfigFileUsage()
-		logger.Fatal("🔥 Please re-try after creating the config file as per the instructions...")
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(config.Email) {
+		logger.Panic("❌ Invalid email format in the configuration.")
 	}
+
+	if len(config.Ports) == 0 {
+		logger.Panic("❌ No ports specified in the configuration.")
+	}
+
+	logger.Println("Config validations passed")
 }
 
-func isFreshInstallation() bool {
-	err := exec.Command("nginx", "-v").Run()
-	return err != nil
+func readConfig() *Config {
+	data, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		logger.Panic("❌ Failed to read the configuration file:", err)
+	}
+
+	var config Config
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		logger.Panic("❌ Failed to unmarshal YAML:", err)
+	}
+
+	return &config
 }

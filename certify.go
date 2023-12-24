@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	logger *log.Logger
+	logger         *log.Logger
+	configFilePath string
 )
 
 type Certifizer struct{}

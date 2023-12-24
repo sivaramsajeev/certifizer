@@ -11,6 +11,7 @@ type NginxProxy struct {
 
 func (n *NginxProxy) setUp() error {
 	installPackages()
+	new(Domain).validate()
 	return nil
 }
 
