@@ -4,6 +4,9 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -47,4 +50,35 @@ func checkDNSResolution(domain string) (string, error) {
 	}
 
 	return ip[0].String(), nil
+}
+
+func checkOSandPackageManager() (string, string) {
+	pkgManagerCmd := ""
+	osType := ""
+
+	switch runtime.GOOS {
+	case "linux":
+		if _, err := os.Stat("/etc/redhat-release"); err == nil {
+			pkgManagerCmd = "yum"
+			osType = "redhat"
+		} else if _, err := os.Stat("/etc/debian_version"); err == nil {
+			pkgManagerCmd = "apt"
+			osType = "debian"
+		}
+	default:
+		logger.Panic("❌ Unsupported operating system.")
+	}
+	return pkgManagerCmd, osType
+}
+
+func installPackage(pkgCmd, pkgName string) {
+	logger.Println("✅ Startinginstallation of", pkgName)
+
+	Cmd := exec.Command(pkgCmd, "install", "-y", "pkgName")
+	err := Cmd.Run()
+	if err != nil {
+		logger.Panic("❌ Failed to install :", pkgName, err)
+	}
+
+	logger.Println("✅ Packages installed successfully for ", pkgName)
 }

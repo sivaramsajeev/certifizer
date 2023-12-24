@@ -29,7 +29,7 @@ func checkConfigFile() {
 		if err != nil {
 			logger.Fatal("🔥 Error reading home path")
 		}
-		configFilePath = filepath.Join(homePath, "certifize.yml")
+		configFilePath = filepath.Join(homePath, "certifizer.yml")
 		logger.Println("✅ Home path: ", configFilePath)
 	}
 

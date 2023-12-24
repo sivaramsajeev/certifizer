@@ -1,16 +1,22 @@
 package main
 
 import (
+	"fmt"
+	"html/template"
 	"os"
-	"os/exec"
-	"runtime"
 )
 
 type NginxProxy struct {
+	osType            string
+	packageManagerCmd string
 }
 
 func (n *NginxProxy) setUp() error {
-	installPackages()
+	n.packageManagerCmd, n.osType = checkOSandPackageManager()
+	if n.osType == "" || n.packageManagerCmd == "" {
+		logger.Fatal("❌ Unsupported OS detected.")
+	}
+	n.installPackages()
 
 	domain := new(Domain)
 	domain.validate()
@@ -21,6 +27,8 @@ func (n *NginxProxy) setUp() error {
 	if err := bot.run(); err != nil {
 		logger.Fatal("❌ Certbot failed receiving the certs")
 	}
+
+	n.createServers(domain)
 	return nil
 }
 
@@ -29,34 +37,65 @@ func (n *NginxProxy) restart() error {
 	return nil
 }
 
-func installPackages() {
-	logger.Println("✅ Starting package installation...")
+func (n *NginxProxy) installPackages() {
+	logger.Println("✅ Starting installation of ALL required packages...")
 
-	var pkgManagerCmd string
-	switch runtime.GOOS {
-	case "linux":
-		if _, err := os.Stat("/etc/redhat-release"); err == nil {
-			pkgManagerCmd = "yum"
-		} else if _, err := os.Stat("/etc/debian_version"); err == nil {
-			pkgManagerCmd = "apt"
-		} else {
-			logger.Panic("❌ Unsupported Linux distribution.")
+	for _, pkg := range []string{"nginx", "certbot", "python3-certbot-nginx"} {
+		installPackage(n.packageManagerCmd, pkg)
+	}
+
+	logger.Println("✅ ALL the Packages have been installed successfully.")
+}
+
+func (n *NginxProxy) createServers(domain *Domain) {
+	// The template string
+	serverTmpl := `
+{{ range .Ports }}
+	server {
+		listen {{ . }} ssl;
+		server_name {{ $.Domain }} www.{{ $.Domain }};
+
+		location / {
+			proxy_pass http://localhost:{{ add . $.Offset }};
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection 'upgrade';
+			proxy_set_header Host $host;
+			proxy_cache_bypass $http_upgrade;
 		}
-	default:
-		logger.Panic("❌ Unsupported operating system.")
-	}
 
-	installNginxCmd := exec.Command(pkgManagerCmd, "install", "-y", "nginx")
-	err := installNginxCmd.Run()
+		ssl_certificate /etc/letsencrypt/live/{{ $.Domain }}/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/{{ $.Domain }}/privkey.pem;
+		include /etc/letsencrypt/options-ssl-nginx.conf;
+		ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+	}
+{{ end }}
+`
+
+	data := domain.config
+
+	file, err := os.Create("/etc/nginx/sites-available/default")
 	if err != nil {
-		logger.Panic("❌ Failed to install Nginx:", err)
+		fmt.Println("Error creating file:", err)
+		return
 	}
+	defer file.Close()
 
-	installCertbotCmd := exec.Command(pkgManagerCmd, "install", "-y", "certbot")
-	err = installCertbotCmd.Run()
+	tmpl, err := template.New("nginxConfig").Funcs(template.FuncMap{"add": add}).Parse(serverTmpl)
 	if err != nil {
-		logger.Panic("❌ Failed to install Certbot:", err)
+		fmt.Println("Error parsing template:", err)
+		return
 	}
 
-	logger.Println("✅ Packages installed successfully.")
+	err = tmpl.Execute(file, data)
+	if err != nil {
+		fmt.Println("Error executing template:", err)
+		return
+	}
+
+	fmt.Println("Configuration written to /etc/nginx/sites-available/default")
+}
+
+func add(a, b int) int {
+	return a + b
 }

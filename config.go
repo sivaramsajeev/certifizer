@@ -28,6 +28,10 @@ func (config *Config) validate() {
 		logger.Panic("❌ No ports specified in the configuration.")
 	}
 
+	if config.Offset == 0 {
+		config.Offset = 7
+	}
+
 	logger.Println("✅ Config validations passed")
 }
 
