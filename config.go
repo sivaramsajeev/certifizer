@@ -28,7 +28,7 @@ func (config *Config) validate() {
 		logger.Panic("❌ No ports specified in the configuration.")
 	}
 
-	logger.Println("Config validations passed")
+	logger.Println("✅ Config validations passed")
 }
 
 func readConfig() *Config {
