@@ -74,7 +74,7 @@ func checkOSandPackageManager() (string, string) {
 func installPackage(pkgCmd, pkgName string) {
 	logger.Println("✅ Startinginstallation of", pkgName)
 
-	Cmd := exec.Command(pkgCmd, "install", "-y", "pkgName")
+	Cmd := exec.Command(pkgCmd, "install", "-y", pkgName)
 	err := Cmd.Run()
 	if err != nil {
 		logger.Panic("❌ Failed to install :", pkgName, err)
