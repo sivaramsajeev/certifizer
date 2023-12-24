@@ -11,7 +11,16 @@ type NginxProxy struct {
 
 func (n *NginxProxy) setUp() error {
 	installPackages()
-	new(Domain).validate()
+
+	domain := new(Domain)
+	domain.validate()
+
+	bot := &Certbot{
+		config: domain.config,
+	}
+	if err := bot.run(); err != nil {
+		logger.Fatal("❌ Certbot failed receiving the certs")
+	}
 	return nil
 }
 
