@@ -79,14 +79,12 @@ func (c *Config) displayPortMappingInfo() {
 	S*S     S*S  S*S    S&S  S*S         S*S         S*S  S*S    S*S  S*b   S%%  
 	S*S     S*S  S*S    S*S  S*S         S*S         S*S  S*S    S*S  S*S   S%  
 	S*S     S*S  S*S    S*S  S*S         S*S         S*S  S*S    S*S   SS_sSSS  
-	SSS     S*S  SSS    S*S  S*S         S*S         S*S  S*S    SSS    Y~YSSY  
-			SP          SP   SP          SP          SP   SP                    
-			Y           Y    Y           Y           Y    Y                     
+	SSS     S*S  SSS    S*S  S*S         S*S         S*S  S*S    SSS    Y~YSSY                      
 																				
 	`)
 
 	for _, p := range c.Ports {
-		logger.Printf("\n Service port: %s -> Host port: %s \n", p, p+c.Offset)
+		logger.Printf("\n Service port: %d -> Host port: %d \n", p, p+c.Offset)
 	}
 
 	logger.Println()
