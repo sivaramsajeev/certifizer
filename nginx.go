@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"os/exec"
 )
 
 type NginxProxy struct {
@@ -29,10 +30,23 @@ func (n *NginxProxy) setUp() error {
 	}
 
 	n.createServers(domain)
+	n.restart()
+	domain.config.displayPortMappingInfo()
 	return nil
 }
 
 func (n *NginxProxy) restart() error {
+	cmd := exec.Command("systemctl", "restart", "nginx")
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("❌ Error restarting Nginx:", err)
+		return err
+	}
+
 	logger.Println("✅ Nginx restarted")
 	return nil
 }
@@ -76,24 +90,24 @@ func (n *NginxProxy) createServers(domain *Domain) {
 
 	file, err := os.Create("/etc/nginx/sites-available/default")
 	if err != nil {
-		fmt.Println("Error creating file:", err)
+		fmt.Println("❌ Error creating file:", err)
 		return
 	}
 	defer file.Close()
 
 	tmpl, err := template.New("nginxConfig").Funcs(template.FuncMap{"add": add}).Parse(serverTmpl)
 	if err != nil {
-		fmt.Println("Error parsing template:", err)
+		fmt.Println("❌ Error parsing template:", err)
 		return
 	}
 
 	err = tmpl.Execute(file, data)
 	if err != nil {
-		fmt.Println("Error executing template:", err)
+		fmt.Println("❌ Error executing template:", err)
 		return
 	}
 
-	fmt.Println("Configuration written to /etc/nginx/sites-available/default")
+	fmt.Println("✅ Configuration written for Nginx")
 }
 
 func add(a, b int) int {

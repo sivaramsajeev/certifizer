@@ -18,10 +18,6 @@ func (c *ConfigChecker) check() {
 	logger.Println("✅ Config checks are done")
 }
 
-func (c *ConfigChecker) displayPortMappingInfo() {
-	logger.Println("✅ The port mappings")
-}
-
 func checkConfigFile() {
 	configFilePath = os.Getenv("CERTIFIZER_CONFIG_PATH")
 	if configFilePath == "" {

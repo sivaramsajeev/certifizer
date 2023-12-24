@@ -23,14 +23,9 @@ func (c *Certifizer) start() {
 		if err := proxy.setUp(); err != nil {
 			logger.Fatal("🔥 Proxy set up has failed!!!")
 		}
-	} else if config.isUpdateRequired {
-		ports := new(Ports)
-		ports.Update(config)
-		if err := new(NginxProxy).restart(); err != nil {
-			logger.Fatal("🔥 Port update has failed!!!")
-		}
+
 	}
-	config.displayPortMappingInfo()
+
 	logger.Println("✅ Program has finished succesfully.")
 }
 

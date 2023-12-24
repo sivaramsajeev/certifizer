@@ -12,7 +12,7 @@ type Certbot struct {
 
 func (c *Certbot) run() error {
 	if c.certsExists() {
-		logger.Println(" Certs are already generated. No need to invoke again.")
+		logger.Println("✅ Certs are already generated. No need to invoke again.")
 		return nil
 	}
 	cmd := exec.Command("certbot", "--nginx", "--non-interactive", "--agree-tos", "--email", c.config.Email, "-d", c.config.Domain)
