@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"regexp"
 
+	"github.com/olekukonko/tablewriter"
 	"gopkg.in/yaml.v2"
 )
 
@@ -83,9 +86,14 @@ func (c *Config) displayPortMappingInfo() {
 																				
 	`)
 
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Service Port", "OS Port"})
+
 	for _, p := range c.Ports {
-		logger.Printf("\n Service port: %d -> Host port: %d \n", p, p+c.Offset)
+		// logger.Printf("\n Service port: %d -> Host port: %d \n", p, p+c.Offset)
+		table.Append([]string{fmt.Sprint(p), fmt.Sprint(p + c.Offset)})
 	}
 
+	table.Render()
 	logger.Println()
 }
